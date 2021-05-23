@@ -1,0 +1,4 @@
+title: $:/plugins/welford/twsr/viewtemplate
+tags: [[$:/tags/ViewTemplate]]
+
+<$list filter="[is[current]tag[$:/tags/twsr]]" variable="listItem"><$twsr/></$list>
