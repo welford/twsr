@@ -10,7 +10,6 @@ twsr widget
 /*global $tw: false */
 //"use strict";
 
-var g_field_prefix	= "twsr_";
 //other data we try to grab
 var g_src		= "tiddler";	//the tiddler that backs this data, if this is missing use "currentTiddler"
 var Widget = require("$:/core/modules/widgets/widget.js").widget;
@@ -24,20 +23,33 @@ var TWSRWidget = function(parseTreeNode,options) {
 
 //Inherit from the base widget class
 TWSRWidget.prototype = new Widget();
-//set class variables	initally to null, we will create them when we first get the chance
 
 //no idea about the other SM algorithms
 TWSRWidget.prototype.AddNewCards = function (amount) {
 	var tiddler = $tw.wiki.getTiddler(this.tiddler_name);
 
 	var tags = tiddler.getFieldList("tags");	
-	var tagFilter = "",filter = "";	
+	var tagFilter = "",filter = "";
+	//tags we are interested in
 	for(i = 0;i<tags.length;i++){
 		var tag = tags[i];
-		if(tag == "$:/tags/twsr") continue;
+		if(this.twsr_tags && this.twsr_tags.indexOf(tag) != -1) continue;
 		tagFilter += "[tag["+tag+"]]";
 	}
-	filter = tagFilter + "+[!tag[$:/tags/twsr]]+[field:twsr_interval[]]";
+	//tags we want to ignore
+	if(this.twsr_tags){
+		for(i = 0;i<this.twsr_tags.length;i++){
+			tagFilter += "+[!tag["+this.twsr_tags[i]+"]]";
+		}
+	}
+
+	if(this.twsr_ignore_tags){
+		for(i = 0;i<this.twsr_ignore_tags.length;i++){
+			tagFilter += "+[!tag["+this.twsr_ignore_tags[i]+"]]";
+		}
+	}
+
+	filter = tagFilter + "+[field:twsr_interval[]]";
 	var tiddlers = $tw.wiki.filterTiddlers(filter);
 	//WHAT SHOULD  WE SORT BY?
 	//$tw.wiki.sortTiddlers(tiddlers, "twsr_interval"); 
@@ -65,7 +77,7 @@ TWSRWidget.prototype.GetScheduledCards = function (title) {
 	var tagFilter = "",filter = "";	
 	for(i = 0;i<tags.length;i++){
 		var tag = tags[i];
-		if(tag == "$:/tags/twsr") continue;
+		if(this.twsr_tags && this.twsr_tags.indexOf(tag) != -1) continue;
 		tagFilter += "[tag["+tag+"]]";
 	}
 
@@ -73,7 +85,12 @@ TWSRWidget.prototype.GetScheduledCards = function (title) {
 	if(tiddlers.length == 0)
 	{
 		//2. SCHEDULED
-		filter = tagFilter + ":filter[get[twsr_interval]compare:date:lt["+$tw.utils.stringifyDate(new Date())+"]]+[!tag[$:/tags/twsr]]";
+		filter = tagFilter + ":filter[get[twsr_interval]compare:date:lt["+$tw.utils.stringifyDate(new Date())+"]]";//+[!tag[$:/tags/twsr]]";
+		if(this.twsr_tags){
+			for(i = 0;i<this.twsr_tags.length;i++){
+				filter += "+[!tag["+this.twsr_tags[i]+"]]";
+			}
+		}
 		tiddlers = $tw.wiki.filterTiddlers(filter);
 
 		if(tiddlers.length == 0) {
@@ -170,9 +187,9 @@ TWSRWidget.prototype.OpenTiddler = function (event,name) {
 
 TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	var _this = this;
-	//grades
-	var grades = {"again":0,"good":4,"easy":5};
-	var addNew = {"+1":1,"+5":5,"+10":10};
+	
+	var settingsDiv = _this.document.createElement("span");
+	settingsDiv.innerHTML = "⚙";
 
 	//divs
 	var content = _this.document.createElement("div");
@@ -196,6 +213,8 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	var index = 0, limit= 0, activeCard = null;
 	var tiddlers =this.GetScheduledCards(this.tiddler_name);
 	limit = tiddlers.length;
+
+	settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 	
 	var ShowCard = function (tiddler) {
 		//make dom element here and then 
@@ -211,7 +230,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		content.style.display = "none";
 		card.appendChild(content);
 		if(g_questionElm) {
-			showAnswer.innerHTML = "Show Answer";
+			showAnswer.innerHTML = _this.twsr_show_answer;
 			card.appendChild(g_questionElm);
 			showAnswer.style.display = "block";
 			gradeDiv.style.display = "none";
@@ -245,13 +264,15 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		activeCard = null;
 		_this.UpdateCardSM2(tiddlers[index], grade);
 		ShowCard(tiddlers[++index]);
+		settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length-index));
 		if(index >= limit)
 		{
 			index = 0, limit= 0,activeCard = null;
 			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
 			limit = tiddlers.length;
+			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 			if(limit == 0){
-				AllDone("All Done, Well Done");
+				AllDone(_this.twsr_finished);
 			}else {
 				ShowCard(tiddlers[index]);
 			}
@@ -265,8 +286,9 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			index = 0, limit= 0,activeCard = null;
 			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
 			limit = tiddlers.length;
+			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 			if(limit == 0){
-				AllDone("All Done, Well Done");
+				AllDone(_this.twsr_finished);
 			}else {
 				gradeDiv.style.display = "none";
 				completeDiv.style.display = "none";
@@ -283,11 +305,11 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	gradeDiv.style.float = "left";
 	gradeDiv.style.display = "none";
 	
-	completeDiv.innerHTML = "All Done, Well Done";
+	completeDiv.innerHTML = _this.twsr_finished;
 	completeDiv.style.display = "none";
 	completeDiv.style.float = "left";
 
-	for(key in grades){
+	for(key in _this.twsr_grades){
 		// Create element
 		var button = _this.document.createElement("button");
 		// Assign classes
@@ -299,7 +321,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		}
 		//set the button name
 		button.innerHTML = key;
-		button.setAttribute("title", "todo (this comment)");		//set hover comment
+		button.setAttribute("title", "grade");		//set hover comment
 		// Add a click event handler
 		button.addEventListener("click",  (function(g)
 			{ 
@@ -309,7 +331,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 					event.stopPropagation();
 					return true;
 				};
-			})(grades[key])
+			})(_this.twsr_grades[key])
 		, false);
 		// Insert element
 		gradeDiv.appendChild(button);
@@ -318,8 +340,6 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	// - - - - - - - - - - - - - - - - - - - - - - - -
 	// NEW CARDS
 	// - - - - - - - - - - - - - - - - - - - - - - - -
-	var settingsDiv = _this.document.createElement("span");
-	settingsDiv.innerHTML = "⚙";
 	parent.insertBefore(settingsDiv,nextSibling);
 	_this.renderChildren(settingsDiv, null);
 
@@ -327,8 +347,8 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	contextMenu.innerHTML = "";
 	contextMenu.style.display = "None";
 	contextMenu.style.zIndex = "1000";
-	contextMenu.style.position = "fixed";
-	settingsDiv.appendChild(contextMenu);
+	contextMenu.style.position = "absolute";
+	document.body.appendChild(contextMenu);
 	
 	//settingsDiv.oncontextmenu = 
 	settingsDiv.onclick = 
@@ -339,7 +359,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		contextMenu.style.left = mouseX(event) + "px";
 		var btns = [];
 		var classes = _this["class"].split(" ") || [];	
-		for(key in addNew){
+		for(key in _this.twsr_add_new){
 			// Create element
 			var button = _this.document.createElement("button");
 			button.className = classes.join(" ");// Assign classes
@@ -360,7 +380,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 						event.stopPropagation();
 						return true;
 					};
-				})(addNew[key])
+				})(_this.twsr_add_new[key])
 			, false);
 			//}(grades[g]);
 			// Insert element	
@@ -416,7 +436,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	if(tiddlers.length > 0){
 		ShowCard(tiddlers[index]);
 	}else{
-		AllDone("Nothing scheduled");
+		AllDone(_this.twsr_nothing_scheduled);
 	}
 }
 
@@ -449,7 +469,7 @@ TWSRWidget.prototype.OpenTiddler = function (event,name) {
 //Compute the internal state of the widget
 TWSRWidget.prototype.execute = function () {
 	//other genral attributes
-	this.GetLatestDetails();
+	this.InitTWSR();
 	this["class"] = this.getAttribute("class", "");
 	this.style = this.getAttribute("style");
 	this.selectedClass = this.getAttribute("selectedClass");
@@ -458,10 +478,69 @@ TWSRWidget.prototype.execute = function () {
 	this.makeChildWidgets();	
 };
 
-TWSRWidget.prototype.GetLatestDetails = function ()
+TWSRWidget.prototype.GetConfigTiddlers = function ()
+{
+	var target_tiddler = $tw.wiki.getTiddler(this.tiddler_name);
+	var target_tags = target_tiddler.getFieldList("tags");
+
+	var filter = "[all[tiddlers+shadows]tag[$:/tags/twsr/config]]";
+	var tiddlers = $tw.wiki.filterTiddlers(filter);
+	this.twsr_grades = {};
+	for(i = 0;i<tiddlers.length;i++){
+		var valid = false;
+		var tiddler = $tw.wiki.getTiddler(tiddlers[i]);
+		var names = tiddler.getFieldList("twsr_cfg_grade_names");	
+		var numbers = tiddler.getFieldList("twsr_cfg_grade_numbers");	
+		var add_new = tiddler.getFieldList("twsr_cfg_add_new");	
+		var tags = tiddler.getFieldList("twsr_cfg_tags");	
+		var ignore_tags = tiddler.getFieldList("twsr_cfg_ignore_tags");	
+		var show_answer = tiddler.getFieldString("twsr_cfg_display");	
+		var scheduled_tip = tiddler.getFieldString("twsr_cfg_schedule")+ " ";	
+		var finished = tiddler.getFieldString("twsr_cfg_finished")+ " ";	
+		var nothing_scheduled = tiddler.getFieldString("twsr_cfg_nothing")+ " ";	
+		var common_tags = target_tags.filter(function(value) { 
+			return tags.indexOf(value) > -1;
+		});
+		//we need this tag as a bare minimum
+		// if(common_tags.indexOf("$:/tags/twsr") == -1){
+		// 	this.twsr_tags.push("$:/tags/twsr");
+		// }
+		//we match the highest number of common tags
+		if(common_tags.length == tags.length){
+			if(names.length == numbers.length){
+				for(g=0;g<names.length;g++){
+					this.twsr_grades[names[g]] = numbers[g];
+				}
+				this.twsr_tags = common_tags;
+				this.twsr_ignore_tags = ignore_tags;
+
+				//this.twsr_tags.push("$:/tags/twsr");
+				this.twsr_add_new = {};
+				for(g=0;g<add_new.length;g++){
+					this.twsr_add_new["+"+add_new[g]] = add_new[g];
+				}
+				this.twsr_show_answer = show_answer;
+				this.twsr_scheduled_tip = scheduled_tip;
+				this.twsr_finished = finished;
+				this.twsr_nothing_scheduled = nothing_scheduled;
+				break; //we found our matching config, ignore further matches
+			}
+			else{
+				console.log("tswr config tiddler : " + tiddler.getFieldString("title") + "malformed, grade names do not match numbers")
+			}
+		}else{
+			console.log("tswr config tiddler : " + tiddler.getFieldString("title") + "no matching tags :" + target_tags + " " + tags)
+		}
+	}
+	console.log(this);
+}
+
+TWSRWidget.prototype.InitTWSR = function ()
 {
 	//try to get from marco, is missing try to get from the 
 	this.tiddler_name = this.getAttribute(g_src,this.getVariable("currentTiddler"));
+	//get the config tiddlers and find out what we need
+	this.GetConfigTiddlers()
 }
 
 //Selectively refreshes the widget if needed. Returns true if the widget or any of its children needed re-rendering

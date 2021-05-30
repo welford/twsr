@@ -1,5 +1,83 @@
 title: $:/plugins/welford/twsr/readme
 
-! twsr
+! Spaces Repetition
 
 https://en.wikipedia.org/wiki/Spaced_repetition
+
+Often reffered to as SRS, when dealing with software that provides a service for this.
+
+! How To Use
+
+Tag a tiddler with $:/tags/twsr, and other tags that match tiddlers you wish to revise as cards. 
+At the bottom of that tiddler should appear a revision UI with a ⚙ icon, you can click that icon
+too randomly add new cards from the whole set, or to jump to the active card you are studying.
+
+Tag a tiddler $:/tags/twsr_ignore and it won't be considered for revision
+
+If you add a "<$question>...</$question>" segment to a tiddler then the user will first be shown the 
+contents of the $question segment, then can then click "Show Answer" to reveal the rest of the tiddlers contents
+
+!Example
+
+See http://welford.github.io/kanji.html which lets you study Japanese characters (kanji) with 1 to 5 strokes.
+
+
+! Configure
+
+Most of the above can be configured by editing $:/plugins/welford/twsr/config_template, you could even copy 
+it and have two separate revision methods within your tiddlywiki.
+
+!!config fields
+
+!!!``tags: [[$:/tags/twsr/config]]``
+This must be ``$:/tags/twsr/config`` for it to be considered a twsr config tiddler. 
+Changing this will nullify this tiddler  as a twsr plugin
+
+!!!``twsr_cfg_tags: $:/tags/twsr``
+The tag(s) used to identify a tiddler to put a flashcard UI in. A tiddler needs to match all the tags here 
+for it to be considered an active tiddler for flashcards UI.
+
+
+If you are removing ``$:/tags/twsr`` from this list then you will need to clone title: ``$:/plugins/welford/twsr/viewtemplate``
+and replace the ``$:/tags/twsr`` shown below with a tag from the list so that the flashcard UI appears
+
+```
+<$list filter="[is[current]tag[$:/tags/twsr]]" variable="listItem"><$twsr/></$list>
+```
+
+!!!``twsr_cfg_ignore_tags: $:/tags/twsr_ignore``
+
+tiddlers with this tag will not be considered for studying
+
+!!!``twsr_cfg_grade_names: [[again]] [[good]] [[easy]]``
+!!!``twsr_cfg_grade_numbers: [[0]] [[4]] [[5]]``
+
+There are a pair, and specifici to the SM-2 alorithm used  (see: https://en.wikipedia.org/wiki/SuperMemo#Description_of_SM-2_algorithm)
+The number of items in both fields needs to match, and they need to be in the same order
+
+In the default cause, when you click "Show Answer" you will be asked to grade the card on how well you recalled it.
+the options will be:
+*Again : 0
+*good : 4
+*easy : 5
+
+
+!!!``twsr_cfg_add_new: [[1]] [[5]] [[10]]``
+
+the number of steps for adding new cards when you click the ⚙ icon
+
+!!!``twsr_cfg_display: Show Answer``
+
+The label of the Show Answer button
+
+!!!``twsr_cfg_schedule: cards scheduled: ``
+
+the label of the ⚙ icon when you hover over it to see how many remaining cards are scheduled.
+
+
+!! Custom Example
+
+http://welford.github.io/kanji.html also contains a custom ruleset for 13 stroke characters (it should show below the main example)
+
+
+
