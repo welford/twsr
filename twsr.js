@@ -13,9 +13,12 @@ twsr widget
 //other data we try to grab
 var g_src		= "tiddler";	//the tiddler that backs this data, if this is missing use "currentTiddler"
 var Widget = require("$:/core/modules/widgets/widget.js").widget;
-var g_showAnswer = false;
-var g_questionElm = null;
-var g_questionTiddler = null;
+
+var g_twsrActive    = false; 	//are we rendering the twsr SSR UI?
+//used to communicate between TWSR widget and Answer/Question Widgets
+var g_questionElm   = null;		//question gets rendered into this is the SSR UI is active
+var g_answerElm     = null;		// used to store a local array of answers to communicate between widgets
+var g_answerClickCB = null; 	// used to store a cb func to communicate between widgets
 
 var TWSRWidget = function(parseTreeNode,options) {
 	this.initialise(parseTreeNode, options);
@@ -37,18 +40,19 @@ TWSRWidget.prototype.AddNewCards = function (amount) {
 		tagFilter += "[tag["+tag+"]]";
 	}
 	//tags we want to ignore
+	// 1. the twsr config tags
 	if(this.twsr_tags){
 		for(i = 0;i<this.twsr_tags.length;i++){
 			tagFilter += "+[!tag["+this.twsr_tags[i]+"]]";
 		}
 	}
-
+	// 2. explicit ignore tags
 	if(this.twsr_ignore_tags){
 		for(i = 0;i<this.twsr_ignore_tags.length;i++){
 			tagFilter += "+[!tag["+this.twsr_ignore_tags[i]+"]]";
 		}
 	}
-
+	//needs to have twsr interval widget
 	filter = tagFilter + "+[field:twsr_interval[]]";
 	var tiddlers = $tw.wiki.filterTiddlers(filter);
 	//WHAT SHOULD  WE SORT BY?
@@ -190,6 +194,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	
 	var settingsDiv = _this.document.createElement("span");
 	settingsDiv.innerHTML = "⚙";
+	settingsDiv.style.cursor = "pointer";
 
 	//divs
 	var content = _this.document.createElement("div");
@@ -217,30 +222,64 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 	
 	var ShowCard = function (tiddler) {
-		//make dom element here and then 
-		//render questions to it, hide the 
-		g_showAnswer = true;
-		g_questionElm = null;//_this.document.createElement("div");
-		g_questionTiddler = tiddler;
+		g_twsrActive = true; //lets the other widgets know we are active
 
+		var ShowAnswerandGrades = function(){
+			content.style.display = "block";
+			gradeDiv.style.display = "block";
+			if(_this.questionElm){
+				_this.questionElm.style.display = "none";
+			}
+			showAnswer.style.display = "none";
+			//show all answers
+			for(var a=0;a<_this.answerElm.length;a++){
+				_this.answerElm[a].style = "";
+			}
+		}
+
+		//setup globals for comms with other widgets
+		g_questionElm = null;
+		g_answerElm = [];
+		var revealGradeAnyway = 0;
+		g_answerClickCB = _this.answerClickCB = function(){
+			revealGradeAnyway++;
+			if(revealGradeAnyway == _this.answerElm.length){
+				ShowAnswerandGrades();
+			}
+		}
+
+		/////////////////////////////////////////////////////
+		//render the tiddler into content div 
 		var t = $tw.wiki.makeTranscludeWidget(tiddler, {document:document, variables:{"currentTiddler":tiddler}});
-		card.innerHTML = "";
-		content.innerHTML = "";
+		content.innerHTML = card.innerHTML = "";
 		t.render(content,null);
+		//hide it
 		content.style.display = "none";
+		//append to this flashcard
 		card.appendChild(content);
-		if(g_questionElm) {
+		/////////////////////////////////////////////////////
+		
+		//copy back global data
+		_this.questionElm = g_questionElm;
+		_this.answerElm = g_answerElm;
+		g_questionElm = null;
+		g_answerElm = null;
+		g_answerClickCB = null;
+
+		//if we have a question or answer segment we need special handling
+		//otherwise we just show the cards
+		if(_this.questionElm || _this.answerElm.length > 0) {
 			showAnswer.innerHTML = _this.twsr_show_answer;
-			card.appendChild(g_questionElm);
+			if(_this.questionElm){
+				card.appendChild(_this.questionElm);
+			}else{
+				//answers only so we need to show content
+				content.style.display = "block";
+			}
 			showAnswer.style.display = "block";
 			gradeDiv.style.display = "none";
 			//card.appendChild(showAnswer);
-			showAnswer.onclick = function(){
-				content.style.display = "block";
-				gradeDiv.style.display = "block";
-				g_questionElm.style.display = "none";
-				showAnswer.style.display = "none";
-			}
+			showAnswer.onclick = ShowAnswerandGrades;
 		}else{
 			gradeDiv.style.display = "block";
 			content.style.display = "block";
@@ -248,8 +287,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		}
 
 		activeCard = tiddler;
-		g_questionTiddler = null;
-		g_showAnswer = false;
+		g_twsrActive = false;
 	}
 
 	var AllDone = function (mgs) {
@@ -296,7 +334,6 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			}
 		}
 	}
-	
 
 	// - - - - - - - - - - - - - - - - - - - - - - - -
 	// GRADES
@@ -351,8 +388,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	document.body.appendChild(contextMenu);
 	
 	//settingsDiv.oncontextmenu = 
-	settingsDiv.onclick = 
-	function (event) {
+	settingsDiv.onclick = function (event) {
 		contextMenu.innerHTML = "";
 		contextMenu.style.display = "block";
 		contextMenu.style.top = mouseY(event) + "px";
@@ -382,7 +418,6 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 					};
 				})(_this.twsr_add_new[key])
 			, false);
-			//}(grades[g]);
 			// Insert element	
 			btns.push(button);
 			contextMenu.appendChild(button);
@@ -501,10 +536,7 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 		var common_tags = target_tags.filter(function(value) { 
 			return tags.indexOf(value) > -1;
 		});
-		//we need this tag as a bare minimum
-		// if(common_tags.indexOf("$:/tags/twsr") == -1){
-		// 	this.twsr_tags.push("$:/tags/twsr");
-		// }
+
 		//we match the highest number of common tags
 		if(common_tags.length == tags.length){
 			if(names.length == numbers.length){
@@ -539,6 +571,9 @@ TWSRWidget.prototype.InitTWSR = function ()
 {
 	//try to get from marco, is missing try to get from the 
 	this.tiddler_name = this.getAttribute(g_src,this.getVariable("currentTiddler"));
+	this.questionElm = null;
+	this.answerElm = [];
+	this.answerClickCB = null;
 	//get the config tiddlers and find out what we need
 	this.GetConfigTiddlers()
 }
@@ -554,6 +589,8 @@ TWSRWidget.prototype.refresh = function (changedTiddlers) {
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//QUESTION WIDGET
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var TWSRQuestion = function(parseTreeNode,options) {
 	this.initialise(parseTreeNode, options);
@@ -566,13 +603,49 @@ TWSRQuestion.prototype = new Widget();
 Render this widget into the DOM
 */
 TWSRQuestion.prototype.render = function(parent,nextSibling) {
-	if(g_showAnswer){
+	if(g_twsrActive){
 		g_questionElm = this.document.createElement("div");
 		Widget.prototype.render.call(this, g_questionElm, nextSibling);
 	}
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//ANSWER WIDGET
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var TWSRAnswer = function(parseTreeNode,options) {
+	this.initialise(parseTreeNode, options);
+};
+
+//Inherit from the base widget class
+TWSRAnswer.prototype = new Widget();
+
+//Render this widget into the DOM
+TWSRAnswer.prototype.render = function(parent,nextSibling) {
+	if(g_twsrActive){
+		var cb = g_answerClickCB;
+		var tmp = this.document.createElement("span");
+		tmp.style.color = "black";
+		tmp.style.backgroundColor = "black";
+		tmp.style.userSelect = "none";
+		tmp.onclick = function(event){
+			tmp.style = "";
+			event.preventDefault();
+			event.stopPropagation();
+			cb();
+			return true;
+		}
+		Widget.prototype.render.call(this, tmp, nextSibling);
+		//tmp.innerHTML = "???";
+		parent.appendChild(tmp);
+		g_answerElm.push(tmp);
+	}else{
+		Widget.prototype.render.call(this, parent, nextSibling);
+	}
+};
+
 exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;
+exports.answer = TWSRAnswer;
 
 })();
