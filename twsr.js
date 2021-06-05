@@ -244,7 +244,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			showAnswer.style.display = "none";
 			//show all answers
 			for(var a=0;a<_this.answerElm.length;a++){
-				_this.answerElm[a].style = "";
+				_this.answerElm[a].classList.remove("twsr_hidden");
 			}
 		}
 
