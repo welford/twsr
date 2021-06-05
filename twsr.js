@@ -212,7 +212,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	var completeDiv  = _this.CreateElement("div", _this.twsr_cards_finished, 	
 																		{float:"left", display:"none"});
 	var content      = _this.CreateElement("div", "", 					{});
-	var showAnswer   = _this.CreateElement("div", "", 					{float:"left", display:"none"});
+	var showAnswer   = _this.CreateElement("button", "", 				{float:"left", display:"none"});
 	var card         = _this.CreateElement("div", "", 					{});
 
 	parent.insertBefore(gradeDiv,nextSibling);
