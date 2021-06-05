@@ -1,0 +1,23 @@
+title: $:/plugins/welford/twsr/css
+type: text/css
+tags: $:/tags/Stylesheet
+
+div.twsr_answer
+{
+	display:inline-block;
+	width:fit-content;
+}
+
+div.twsr_hidden
+{
+	color:black !important;
+	background-color:black !important;
+	user-select: none;
+}
+
+div.twsr_hidden *
+{
+	color:black !important;
+	background-color:black !important;
+	border:0px solid black !important;
+}

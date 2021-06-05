@@ -95,6 +95,12 @@ TWSRWidget.prototype.GetScheduledCards = function (title) {
 				filter += "+[!tag["+this.twsr_tags[i]+"]]";
 			}
 		}
+		// 2. explicit ignore tags
+		if(this.twsr_ignore_tags){
+			for(i = 0;i<this.twsr_ignore_tags.length;i++){
+				filter += "+[!tag["+this.twsr_ignore_tags[i]+"]]";
+			}
+		}
 		tiddlers = $tw.wiki.filterTiddlers(filter);
 
 		if(tiddlers.length == 0) {
@@ -189,30 +195,35 @@ TWSRWidget.prototype.OpenTiddler = function (event,name) {
 	});
 };
 
+TWSRWidget.prototype.CreateElement = function (type, content, style) {
+	var elm = this.document.createElement(type);
+	for(let prop of Object.keys(style)){
+		elm.style[prop.toString()] = style[prop.toString()];
+	}
+	elm.innerHTML = content;
+	return elm;
+}
+
 TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	var _this = this;
 	
-	var settingsDiv = _this.document.createElement("span");
-	settingsDiv.innerHTML = "⚙";
-	settingsDiv.style.cursor = "pointer";
+	var settingsDiv  = _this.CreateElement("span", "⚙", 				{cursor:"pointer"});
+	var gradeDiv     = _this.CreateElement("div", "", 					{float:"left", display:"none"});
+	var completeDiv  = _this.CreateElement("div", _this.twsr_cards_finished, 	
+																		{float:"left", display:"none"});
+	var content      = _this.CreateElement("div", "", 					{});
+	var showAnswer   = _this.CreateElement("div", "", 					{float:"left", display:"none"});
+	var card         = _this.CreateElement("div", "", 					{});
 
-	//divs
-	var content = _this.document.createElement("div");
-
-	var gradeDiv = _this.document.createElement("div");
 	parent.insertBefore(gradeDiv,nextSibling);
 	_this.renderChildren(gradeDiv, null);
 
-	var showAnswer = _this.document.createElement("button");
-	showAnswer.style.float = "left";
-	showAnswer.style.display = "none";
 	parent.insertBefore(showAnswer,nextSibling);
 	_this.renderChildren(showAnswer, null);
 
-	var completeDiv = _this.document.createElement("div");
 	parent.insertBefore(completeDiv,nextSibling);
 	_this.renderChildren(completeDiv, null);
-	var card = _this.document.createElement("div");
+
 
 	//. . . . .
 	var index = 0, limit= 0, activeCard = null;
@@ -310,7 +321,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			limit = tiddlers.length;
 			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 			if(limit == 0){
-				AllDone(_this.twsr_finished);
+				AllDone(_this.twsr_cards_finished);
 			}else {
 				ShowCard(tiddlers[index]);
 			}
@@ -326,7 +337,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			limit = tiddlers.length;
 			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
 			if(limit == 0){
-				AllDone(_this.twsr_finished);
+				AllDone(_this.twsr_cards_finished);
 			}else {
 				gradeDiv.style.display = "none";
 				completeDiv.style.display = "none";
@@ -338,13 +349,6 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	// - - - - - - - - - - - - - - - - - - - - - - - -
 	// GRADES
 	// - - - - - - - - - - - - - - - - - - - - - - - -
-	gradeDiv.innerHTML = "";
-	gradeDiv.style.float = "left";
-	gradeDiv.style.display = "none";
-	
-	completeDiv.innerHTML = _this.twsr_finished;
-	completeDiv.style.display = "none";
-	completeDiv.style.float = "left";
 
 	for(key in _this.twsr_grades){
 		// Create element
@@ -524,20 +528,23 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 	for(i = 0;i<tiddlers.length;i++){
 		var valid = false;
 		var tiddler = $tw.wiki.getTiddler(tiddlers[i]);
-		var names = tiddler.getFieldList("twsr_cfg_grade_names");	
-		var numbers = tiddler.getFieldList("twsr_cfg_grade_numbers");	
-		var add_new = tiddler.getFieldList("twsr_cfg_add_new");	
-		var tags = tiddler.getFieldList("twsr_cfg_tags");	
-		var ignore_tags = tiddler.getFieldList("twsr_cfg_ignore_tags");	
-		var show_answer = tiddler.getFieldString("twsr_cfg_display");	
-		var scheduled_tip = tiddler.getFieldString("twsr_cfg_schedule")+ " ";	
-		var finished = tiddler.getFieldString("twsr_cfg_finished")+ " ";	
-		var nothing_scheduled = tiddler.getFieldString("twsr_cfg_nothing")+ " ";	
-		var common_tags = target_tags.filter(function(value) { 
+
+		var names 		= tiddler.getFieldList("twsr_cfg_grade_names");	
+		var numbers 	= tiddler.getFieldList("twsr_cfg_grade_numbers");	
+
+		var add_new 			= tiddler.getFieldList("twsr_cfg_add_new");	
+		var tags 				= tiddler.getFieldList("twsr_cfg_tags");	
+		var ignore_tags 		= tiddler.getFieldList("twsr_cfg_ignore_tags");	
+		var show_answer 		= tiddler.getFieldString("twsr_cfg_show_answer");	
+		var scheduled_tip 		= tiddler.getFieldString("twsr_cfg_cards_scheduled")+ " ";	
+		var finished 			= tiddler.getFieldString("twsr_cfg_cards_finished")+ " ";	
+		var nothing_scheduled 	= tiddler.getFieldString("twsr_cfg_nothing_scheduled")+ " ";	
+
+		var common_tags 		= target_tags.filter(function(value) { 
 			return tags.indexOf(value) > -1;
 		});
 
-		//we match the highest number of common tags
+		//we match the exact number of tags
 		if(common_tags.length == tags.length){
 			if(names.length == numbers.length){
 				for(g=0;g<names.length;g++){
@@ -551,9 +558,10 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 				for(g=0;g<add_new.length;g++){
 					this.twsr_add_new["+"+add_new[g]] = add_new[g];
 				}
+
 				this.twsr_show_answer = show_answer;
 				this.twsr_scheduled_tip = scheduled_tip;
-				this.twsr_finished = finished;
+				this.twsr_cards_finished = finished;
 				this.twsr_nothing_scheduled = nothing_scheduled;
 				break; //we found our matching config, ignore further matches
 			}
@@ -589,19 +597,17 @@ TWSRWidget.prototype.refresh = function (changedTiddlers) {
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//QUESTION WIDGET
+// Question Widget
+// if twsr is active we hide whatever isn't in the qustion segment until the user clicks shows answer
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var TWSRQuestion = function(parseTreeNode,options) {
 	this.initialise(parseTreeNode, options);
 };
 
-//Inherit from the base widget class
-TWSRQuestion.prototype = new Widget();
+TWSRQuestion.prototype = new Widget(); //Inherit from the base widget class
 
-/*
-Render this widget into the DOM
-*/
+//Render this widget into the DOM
 TWSRQuestion.prototype.render = function(parent,nextSibling) {
 	if(g_twsrActive){
 		g_questionElm = this.document.createElement("div");
@@ -610,39 +616,41 @@ TWSRQuestion.prototype.render = function(parent,nextSibling) {
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//ANSWER WIDGET
+// Answer Widget
+// if twsr is active we hide whatever is in the answer segment unless the user clicks on it
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var TWSRAnswer = function(parseTreeNode,options) {
 	this.initialise(parseTreeNode, options);
 };
 
-//Inherit from the base widget class
-TWSRAnswer.prototype = new Widget();
+TWSRAnswer.prototype = new Widget(); //Inherit from the basey widget class
 
 //Render this widget into the DOM
 TWSRAnswer.prototype.render = function(parent,nextSibling) {
 	if(g_twsrActive){
 		var cb = g_answerClickCB;
-		var tmp = this.document.createElement("span");
-		tmp.style.color = "black";
-		tmp.style.backgroundColor = "black";
-		tmp.style.userSelect = "none";
-		tmp.onclick = function(event){
-			tmp.style = "";
+		var tmp = this.document.createElement("div");
+		tmp.classList.add("twsr_answer");
+		tmp.classList.add("twsr_hidden");
+		function ClickEvent(event) {
+			tmp.classList.remove("twsr_hidden");
 			event.preventDefault();
 			event.stopPropagation();
 			cb();
+			tmp.removeEventListener("click", ClickEvent, true);
 			return true;
 		}
+		tmp.addEventListener("click", ClickEvent, true);
 		Widget.prototype.render.call(this, tmp, nextSibling);
-		//tmp.innerHTML = "???";
 		parent.appendChild(tmp);
 		g_answerElm.push(tmp);
 	}else{
 		Widget.prototype.render.call(this, parent, nextSibling);
 	}
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;

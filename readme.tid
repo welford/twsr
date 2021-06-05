@@ -19,7 +19,7 @@ contents of the $question segment, then can then click "Show Answer" to reveal t
 
 !Example
 
-See http://welford.github.io/kanji.html which lets you study Japanese characters (kanji) with 1 to 5 strokes.
+See http://welford.github.io/twsr.html which lets you study Japanese characters (kanji) with 1 to 5 strokes.
 
 
 ! Configure
@@ -77,7 +77,7 @@ the label of the ⚙ icon when you hover over it to see how many remaining cards
 
 !! Custom Example
 
-http://welford.github.io/kanji.html also contains a custom ruleset for 13 stroke characters (it should show below the main example)
+http://welford.github.io/twsr.html also contains a custom ruleset for 13 stroke characters (it should show below the main example)
 
 
 

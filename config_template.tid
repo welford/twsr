@@ -5,7 +5,7 @@ twsr_cfg_ignore_tags: $:/tags/twsr_ignore
 twsr_cfg_grade_names: [[again]] [[good]] [[easy]]
 twsr_cfg_grade_numbers: [[0]] [[4]] [[5]]
 twsr_cfg_add_new: [[1]] [[5]] [[10]]
-twsr_cfg_display: Show Answer
-twsr_cfg_schedule: cards scheduled: 
-twsr_cfg_finished: All Done, Well Done
-twsr_cfg_nothing: Nothing Scheduled
+twsr_cfg_show_answer: Show Answer
+twsr_cfg_cards_scheduled: cards scheduled: 
+twsr_cfg_cards_finished: All Done, Well Done
+twsr_cfg_nothing_scheduled: Nothing Scheduled
