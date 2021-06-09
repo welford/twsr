@@ -125,7 +125,7 @@ TWSRWidget.prototype.UpdateCardSM2 = function (title, grade) {
 		rNumber = ParseInt(tiddler.getFieldString["twsr_rnumber"]);
 	}
 	if(tiddler.hasField["twsr_efactor"]){
-		rNumber = ParseFloat(tiddler.getFieldString["twsr_efactor"]);
+		eFactor = ParseFloat(tiddler.getFieldString["twsr_efactor"]);
 	}
 	if(grade >= 3){
 		if(rNumber == 0){
