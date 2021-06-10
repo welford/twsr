@@ -230,7 +230,9 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	var tiddlers =this.GetScheduledCards(this.tiddler_name);
 	limit = tiddlers.length;
 
-	settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+	if(!settingsDiv.isTiddlyWikiFakeDom){
+		settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+	}
 	
 	var ShowCard = function (tiddler) {
 		g_twsrActive = true; //lets the other widgets know we are active
@@ -263,7 +265,9 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		//render the tiddler into content div 
 		var t = $tw.wiki.makeTranscludeWidget(tiddler, {document:document, variables:{"currentTiddler":tiddler}});
 		content.innerHTML = card.innerHTML = "";
-		t.render(content,null);
+		if(!content.isTiddlyWikiFakeDom){
+			t.render(content,null);
+		}
 		//hide it
 		content.style.display = "none";
 		//append to this flashcard
@@ -313,13 +317,17 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		activeCard = null;
 		_this.UpdateCardSM2(tiddlers[index], grade);
 		ShowCard(tiddlers[++index]);
-		settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length-index));
+		if(!settingsDiv.isTiddlyWikiFakeDom){
+			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length-index));
+		}
 		if(index >= limit)
 		{
 			index = 0, limit= 0,activeCard = null;
 			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
 			limit = tiddlers.length;
-			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+			if(!settingsDiv.isTiddlyWikiFakeDom){
+				settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+			}
 			if(limit == 0){
 				AllDone(_this.twsr_cards_finished);
 			}else {
@@ -335,7 +343,9 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 			index = 0, limit= 0,activeCard = null;
 			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
 			limit = tiddlers.length;
-			settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+			if(!settingsDiv.isTiddlyWikiFakeDom){
+				settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
+			}
 			if(limit == 0){
 				AllDone(_this.twsr_cards_finished);
 			}else {
@@ -357,12 +367,14 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		var classes = _this["class"].split(" ") || [];	
 		button.className = classes.join(" ");
 		// Assign styles
-		if(_this.style) {
+		if(_this.style && !button.isTiddlyWikiFakeDom) {
 			button.setAttribute("style", _this.style);
 		}
 		//set the button name
 		button.innerHTML = key;
-		button.setAttribute("title", "grade");		//set hover comment
+		if(!button.isTiddlyWikiFakeDom){
+			button.setAttribute("title", "grade");		//set hover comment
+		}
 		// Add a click event handler
 		button.addEventListener("click",  (function(g)
 			{ 
@@ -389,80 +401,85 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 	contextMenu.style.display = "None";
 	contextMenu.style.zIndex = "1000";
 	contextMenu.style.position = "absolute";
-	document.body.appendChild(contextMenu);
-	
-	//settingsDiv.oncontextmenu = 
-	settingsDiv.onclick = function (event) {
-		contextMenu.innerHTML = "";
-		contextMenu.style.display = "block";
-		contextMenu.style.top = mouseY(event) + "px";
-		contextMenu.style.left = mouseX(event) + "px";
-		var btns = [];
-		var classes = _this["class"].split(" ") || [];	
-		for(key in _this.twsr_add_new){
-			// Create element
-			var button = _this.document.createElement("button");
-			button.className = classes.join(" ");// Assign classes
-			if(_this.style) { // Assign styles
-				button.setAttribute("style", _this.style);
+	if(!contextMenu.isTiddlyWikiFakeDom) {
+		document.body.appendChild(contextMenu);
+	}
+	if(!contextMenu.isTiddlyWikiFakeDom) {
+		//settingsDiv.oncontextmenu = 
+		settingsDiv.onclick = function (event) {
+			contextMenu.innerHTML = "";
+			contextMenu.style.display = "block";
+			contextMenu.style.top = mouseY(event) + "px";
+			contextMenu.style.left = mouseX(event) + "px";
+			var btns = [];
+			var classes = _this["class"].split(" ") || [];	
+			for(key in _this.twsr_add_new){
+				// Create element
+				var button = _this.document.createElement("button");
+				button.className = classes.join(" ");// Assign classes
+				if(_this.style && !button.isTiddlyWikiFakeDom) { // Assign styles
+					button.setAttribute("style", _this.style);
+				}
+				//set the button name
+				button.innerHTML = key;
+				button.style.width = "100%";
+				button.style.display = "block";
+				if(!button.isTiddlyWikiFakeDo){
+					button.setAttribute("title", "");		//set hover comment
+				}
+				// Add a click event handler
+				button.addEventListener("click",  (function(g)
+					{ 
+						return function(event) {
+							OnClickAddNew(g);
+							event.preventDefault();
+							event.stopPropagation();
+							return true;
+						};
+					})(_this.twsr_add_new[key])
+				, false);
+				// Insert element	
+				btns.push(button);
+				contextMenu.appendChild(button);
 			}
-			//set the button name
-			button.innerHTML = key;
-			button.style.width = "100%";
-			button.style.display = "block";
-			button.setAttribute("title", "");		//set hover comment
-			// Add a click event handler
-			button.addEventListener("click",  (function(g)
-				{ 
-					return function(event) {
-						OnClickAddNew(g);
+
+			{
+				//ADD GOTO TIDDLER BUTTON
+				var gotoTiddler = _this.document.createElement("button");
+				gotoTiddler.className = classes.join(" ");
+				if(_this.style && !gotoTiddler.isTiddlyWikiFakeDom) {
+					gotoTiddler.setAttribute("style", _this.style);
+				}
+				//set the button name
+				gotoTiddler.innerHTML = "tiddler";
+				gotoTiddler.style.width = "100%";
+				gotoTiddler.style.display = "block";
+
+				gotoTiddler.addEventListener("click",function (event) {
+					if(activeCard){
+						_this.OpenTiddler(event,activeCard);
 						event.preventDefault();
 						event.stopPropagation();
-						return true;
-					};
-				})(_this.twsr_add_new[key])
-			, false);
-			// Insert element	
-			btns.push(button);
-			contextMenu.appendChild(button);
-		}
-
-		{
-			//ADD GOTO TIDDLER BUTTON
-			var gotoTiddler = _this.document.createElement("button");
-			gotoTiddler.className = classes.join(" ");
-			if(_this.style) {
-				gotoTiddler.setAttribute("style", _this.style);
+					}
+					return true;
+				}, false);
+				btns.push(gotoTiddler);
+				contextMenu.appendChild(gotoTiddler);
 			}
-			//set the button name
-			gotoTiddler.innerHTML = "tiddler";
-			gotoTiddler.style.width = "100%";
-			gotoTiddler.style.display = "block";
 
-			gotoTiddler.addEventListener("click",function (event) {
-				if(activeCard){
-					_this.OpenTiddler(event,activeCard);
-					event.preventDefault();
-					event.stopPropagation();
+			function TMP(event) {
+				for(var i =0;i<btns.length;i++){
+					if (event.target == btns[i] ) {
+						event.target.click();
+					}
 				}
-				return true;
-			}, false);
-			btns.push(gotoTiddler);
-			contextMenu.appendChild(gotoTiddler);
-		}
-
-		function TMP(event) {
-			for(var i =0;i<btns.length;i++){
-				if (event.target == btns[i] ) {
-					event.target.click();
-				}
+				contextMenu.style.display = "None";
+				document.removeEventListener('mousedown', TMP);
 			}
-			contextMenu.style.display = "None";
-			document.removeEventListener('mousedown', TMP);
-		}
-		document.addEventListener('mousedown', TMP);
+			document.addEventListener('mousedown', TMP);
 
-		return false;
+			return false;
+		}
 	}
 	
 	// - - - - - - - - - - - - - - - - - - - - - - - -

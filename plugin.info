@@ -1,8 +1,8 @@
 {
 	"title": "$:/plugins/welford/twsr",
-	"description": "Spaced Repeatition",
+	"description": "Spaced Repetition",
 	"author": "James W. Anderson",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"core-version": ">=5.0.0",
 	"source": "https://github.com/Welford/twsr",
 	"list": "readme",
