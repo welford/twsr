@@ -122,10 +122,10 @@ TWSRWidget.prototype.UpdateCardSM2 = function (title, grade) {
 	// https://en.wikipedia.org/wiki/SuperMemo
 	var rNumber = 0, eFactor = 2.5, interval = 0;
 	if(tiddler.hasField("twsr_rnumber")){
-		rNumber = ParseInt(tiddler.getFieldString("twsr_rnumber"));
+		rNumber = parseInt(tiddler.getFieldString("twsr_rnumber"));
 	}
 	if(tiddler.hasField("twsr_efactor")){
-		eFactor = ParseFloat(tiddler.getFieldString("twsr_efactor"));
+		eFactor = parseFloat(tiddler.getFieldString("twsr_efactor"));
 	}
 	if(grade >= 3){
 		if(rNumber == 0){
