@@ -52,11 +52,11 @@ TWSRWidget.prototype.AddNewCards = function (amount) {
 			tagFilter += "+[!tag["+this.twsr_ignore_tags[i]+"]]";
 		}
 	}
-	//needs to have twsr interval widget
+	//needs to have twsr interval attribute
 	filter = tagFilter + "+[field:twsr_interval[]]";
 	var tiddlers = $tw.wiki.filterTiddlers(filter);
 	//WHAT SHOULD  WE SORT BY?
-	//$tw.wiki.sortTiddlers(tiddlers, "twsr_interval"); 
+	//$tw.wiki.sortTiddlers(tiddlers, "twsr_interval");  //largest numbers first?
 
 	var newAddList = [];
 	for(i = 0;i<tiddlers.length && i<amount;i++){
@@ -64,6 +64,7 @@ TWSRWidget.prototype.AddNewCards = function (amount) {
 		$tw.wiki.setText(tiddlers[i], "twsr_rnumber",  undefined, 0);
 		$tw.wiki.setText(tiddlers[i], "twsr_efactor",  undefined, 2.5);
 		$tw.wiki.setText(tiddlers[i], "twsr_interval", undefined, 0);
+		$tw.wiki.setText(tiddlers[i], "twsr_ivalue", undefined, 0);
 		newAddList.push(tiddlers[i]);
 	}
 	//filter out tiddlers whose twsr_interval date is in the future
@@ -120,22 +121,25 @@ TWSRWidget.prototype.UpdateCardSM2 = function (title, grade) {
 
 	var tiddler = $tw.wiki.getTiddler(title);
 	// https://en.wikipedia.org/wiki/SuperMemo
-	var rNumber = 0, eFactor = 2.5, interval = 0;
+	var rNumber = 0, eFactor = 2.5, iValue = 0;
 	if(tiddler.hasField("twsr_rnumber")){
 		rNumber = parseInt(tiddler.getFieldString("twsr_rnumber"));
 	}
 	if(tiddler.hasField("twsr_efactor")){
 		eFactor = parseFloat(tiddler.getFieldString("twsr_efactor"));
 	}
+	if(tiddler.hasField("twsr_ivalue")){
+		iValue = parseFloat(tiddler.getFieldString("twsr_ivalue"));
+	}
 	if(grade >= 3){
 		if(rNumber == 0){
-			interval = 1; //+1 days
+			iValue = 1; //+1 days
 		} 
 		else if(rNumber == 1){
-			interval = 6; //+6 days
+			iValue = 6; //+6 days
 		}
 		else {
-			interval = interval * eFactor;
+			iValue = iValue * eFactor;
 		}
 		//EF ← EF + (0.1 − (5 − q) × (0.08 + (5 − q) × 0.02))
 		eFactor = eFactor + (0.1-(5-grade)*(0.08+(5-grade)*0.02))
@@ -145,16 +149,17 @@ TWSRWidget.prototype.UpdateCardSM2 = function (title, grade) {
 		rNumber++;
 	}
 	else{
-		interval = 1; //+1 day
+		iValue = 1; //+1 day
 		rNumber = 0; 
 		//what happens to e factor here
 	}
 	var date = new Date();
-	var newDate = new Date(date.getTime() + (interval * 24 * 60 * 60 * 1000));
+	var reviewDate = new Date(date.getTime() + (iValue * 24 * 60 * 60 * 1000));
 	$tw.wiki.setText(title, "twsr_grade",    undefined, grade);
 	$tw.wiki.setText(title, "twsr_rnumber",  undefined, rNumber);
 	$tw.wiki.setText(title, "twsr_efactor",  undefined, eFactor);
-	$tw.wiki.setText(title, "twsr_interval", undefined, $tw.utils.stringifyDate(newDate));
+	$tw.wiki.setText(title, "twsr_interval", undefined, $tw.utils.stringifyDate(reviewDate));
+	$tw.wiki.setText(title, "twsr_ivalue", undefined, iValue);
 }
 
 function mouseX(evt) {
