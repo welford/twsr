@@ -650,8 +650,18 @@ TWSRAnswer.prototype = new Widget(); //Inherit from the basey widget class
 
 //Render this widget into the DOM
 TWSRAnswer.prototype.render = function(parent,nextSibling) {
-	if(g_twsrActive){
-		var cb = g_answerClickCB;
+	var locallyActive  = false;
+	if(!g_twsrActive){
+		var ct = this.getVariable("currentTiddler");
+		var tiddler = $tw.wiki.getTiddler(ct);
+		var tags = tiddler.getFieldList("tags");
+		if(tags.indexOf("$:/tags/twsr/hide") >= 0){
+			locallyActive = true;
+		}
+	}
+
+	if(g_twsrActive || locallyActive){
+		var cb = locallyActive ? function(){} : g_answerClickCB;
 		var tmp = this.document.createElement("div");
 		tmp.classList.add("twsr_answer");
 		tmp.classList.add("twsr_hidden");
@@ -666,10 +676,44 @@ TWSRAnswer.prototype.render = function(parent,nextSibling) {
 		tmp.addEventListener("click", ClickEvent, true);
 		Widget.prototype.render.call(this, tmp, nextSibling);
 		parent.appendChild(tmp);
-		g_answerElm.push(tmp);
+		if(!locallyActive){
+			g_answerElm.push(tmp);
+		}
 	}else{
 		Widget.prototype.render.call(this, parent, nextSibling);
 	}
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+// Ruby Widget
+// shortcut for getting ruby format
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var TWSRRuby = function(parseTreeNode,options) {
+	this.initialise(parseTreeNode, options);
+};
+
+TWSRRuby.prototype = new Widget(); //Inherit from the basey widget class
+
+//Render this widget into the DOM
+TWSRRuby.prototype.render = function(parent,nextSibling) {
+	this.computeAttributes();
+	var lower = this.getAttribute("l");
+	var upper = this.getAttribute("u");
+	var r = this.document.createElement("ruby");
+	var rt = this.document.createElement("rt");
+	//var a = this.document.createElement("answer");
+	r.innerHTML = lower;
+	//a.innerHTML = upper;
+	rt.innerHTML = upper;
+	//rt.appendChild(a);
+	r.appendChild(rt);
+
+	//tmp = new TWSRAnswer(parent);
+
+	Widget.prototype.render.call(this, r, nextSibling);
+	parent.appendChild(r);
+	//Widget.prototype.render.call(this, parent, nextSibling);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -677,5 +721,6 @@ TWSRAnswer.prototype.render = function(parent,nextSibling) {
 exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;
 exports.answer = TWSRAnswer;
+exports.r = TWSRRuby;
 
 })();
