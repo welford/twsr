@@ -1,0 +1,17 @@
+title: $:/plugins/welford/twsr/EditorToolsbar/Answerify
+caption: Add Answer Tags
+condition: [<targetTiddler>!has[type]] [<targetTiddler>type[text/vnd.tiddlywiki]]
+created: 20210620153729645
+description: Add answer tags around selection
+icon: $:/plugins/welford/twsr/Images/Answerify
+shortcuts: ((answerify))
+modified: 20210620154042826
+tags: $:/tags/EditorToolbar
+
+
+<$action-sendmessage
+	$message="tm-edit-text-operation"
+	$param="wrap-selection"
+	prefix="<$a>"
+	suffix="</$a>"
+/>

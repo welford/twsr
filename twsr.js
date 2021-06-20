@@ -203,6 +203,7 @@ TWSRWidget.prototype.OpenTiddler = function (event,name) {
 TWSRWidget.prototype.CreateElement = function (type, content, style) {
 	var elm = this.document.createElement(type);
 	for(let prop of Object.keys(style)){
+	var tmp = Object.keys(style)
 		elm.style[prop.toString()] = style[prop.toString()];
 	}
 	elm.innerHTML = content;
@@ -594,7 +595,6 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 			console.log("tswr config tiddler : " + tiddler.getFieldString("title") + "no matching tags :" + target_tags + " " + tags)
 		}
 	}
-	console.log(this);
 }
 
 TWSRWidget.prototype.InitTWSR = function ()
@@ -652,17 +652,18 @@ TWSRAnswer.prototype = new Widget(); //Inherit from the basey widget class
 TWSRAnswer.prototype.render = function(parent,nextSibling) {
 	var locallyActive  = false;
 	if(!g_twsrActive){
-		var ct = this.getVariable("currentTiddler");
-		var tiddler = $tw.wiki.getTiddler(ct);
-		var tags = tiddler.getFieldList("tags");
-		if(tags.indexOf("$:/tags/twsr/hide") >= 0){
+		var tags = $tw.wiki.getTiddler(this.getVariable("currentTiddler")).getFieldList("tags");
+		if(tags.indexOf("$:/tags/twsr/hideAnswer") >= 0){
 			locallyActive = true;
 		}
 	}
 
 	if(g_twsrActive || locallyActive){
+		this.computeAttributes();
 		var cb = locallyActive ? function(){} : g_answerClickCB;
-		var tmp = this.document.createElement("div");
+		this.computeAttributes();
+		var useSpan = this.hasAttribute("s");
+		var tmp = this.document.createElement(useSpan ? "span" : "div");
 		tmp.classList.add("twsr_answer");
 		tmp.classList.add("twsr_hidden");
 		function ClickEvent(event) {
@@ -695,32 +696,54 @@ var TWSRRuby = function(parseTreeNode,options) {
 
 TWSRRuby.prototype = new Widget(); //Inherit from the basey widget class
 
+//Compute the internal state of the widget
+TWSRRuby.prototype.execute = function() {
+	Widget.prototype.execute.call(this);
+	//left here for future reference
+
+	// this.makeChildWidgets([{
+	// 	type: "answer",
+	// 	attributes: this.parseTreeNode.attributes,
+	
+	// 	children: this.parseTreeNode.children
+	// }]);	y
+
+}
+
 //Render this widget into the DOM
 TWSRRuby.prototype.render = function(parent,nextSibling) {
-	this.computeAttributes();
-	var lower = this.getAttribute("l");
-	var upper = this.getAttribute("u");
-	var r = this.document.createElement("ruby");
-	var rt = this.document.createElement("rt");
-	//var a = this.document.createElement("answer");
-	r.innerHTML = lower;
-	//a.innerHTML = upper;
-	rt.innerHTML = upper;
-	//rt.appendChild(a);
-	r.appendChild(rt);
+	if(!("twsrruby" in this.parseTreeNode)){
+		this.parentDomNode = parent;
+		this.computeAttributes();
+		var upper = this.getAttribute("u");
+		var useAnswer = !this.hasAttribute("na");
 
-	//tmp = new TWSRAnswer(parent);
+		var tags = $tw.wiki.getTiddler(this.getVariable("currentTiddler")).getFieldList("tags");
+		if(tags.indexOf("$:/tags/twsr/noRubyAnswer") > 0){
+				useAnswer = false;
+		}
+		
+		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby>twsr_replace_me<rt>"+(useAnswer?"<$a s>":"")+upper+(useAnswer?"</$a>":"")+"</rt></ruby>", {parseAsInline: true});
 
-	Widget.prototype.render.call(this, r, nextSibling);
-	parent.appendChild(r);
-	//Widget.prototype.render.call(this, parent, nextSibling);
+		var newTree = wikiParser.tree;
+		var temp = newTree[0].children[1];
+		newTree[0].children = this.parseTreeNode.children;
+		newTree[0].children.push(temp);
+		this.parseTreeNode.children = newTree;
+		this.parseTreeNode["twsrruby"] = true;
+	}
+	Widget.prototype.render.call(this, parent, nextSibling);
 };
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;
 exports.answer = TWSRAnswer;
+exports.ruby = TWSRRuby;
+exports.q = TWSRQuestion;
+exports.a = TWSRAnswer;
 exports.r = TWSRRuby;
 
 })();

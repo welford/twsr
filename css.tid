@@ -8,7 +8,11 @@ div.twsr_answer
 	width:fit-content;
 }
 
-div.twsr_hidden
+span.twsr_answer
+{	
+}
+
+div.twsr_hidden,span.twsr_hidden
 {
 	color:black !important;
 	background-color:black !important;
