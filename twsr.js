@@ -653,7 +653,7 @@ TWSRAnswer.prototype.render = function(parent,nextSibling) {
 	var locallyActive  = false;
 	if(!g_twsrActive){
 		var tags = $tw.wiki.getTiddler(this.getVariable("currentTiddler")).getFieldList("tags");
-		if(tags.indexOf("$:/tags/twsr/hideAnswer") >= 0){
+		if(tags.indexOf("$:/tags/twsr/hideAnswer") >= 0 || tags.indexOf("$:/tags/twsr/hideAnswers") >= 0){
 			locallyActive = true;
 		}
 	}
