@@ -202,8 +202,9 @@ TWSRWidget.prototype.OpenTiddler = function (event,name) {
 
 TWSRWidget.prototype.CreateElement = function (type, content, style) {
 	var elm = this.document.createElement(type);
-	for(let prop of Object.keys(style)){
 	var tmp = Object.keys(style)
+	for(var i =0; i< tmp.length;i++){
+		var prop = tmp[i];
 		elm.style[prop.toString()] = style[prop.toString()];
 	}
 	elm.innerHTML = content;
