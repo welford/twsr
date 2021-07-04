@@ -653,7 +653,9 @@ TWSRAnswer.prototype = new Widget(); //Inherit from the basey widget class
 TWSRAnswer.prototype.render = function(parent,nextSibling) {
 	var locallyActive  = false;
 	if(!g_twsrActive){
-		var tags = $tw.wiki.getTiddler(this.getVariable("currentTiddler")).getFieldList("tags");
+		var ct = this.getVariable("currentTiddler");
+		var tid = $tw.wiki.getTiddler(ct);
+		var tags = tid ? tid.getFieldList("tags") : [];
 		if(tags.indexOf("$:/tags/twsr/hideAnswer") >= 0 || tags.indexOf("$:/tags/twsr/hideAnswers") >= 0){
 			locallyActive = true;
 		}
@@ -710,30 +712,32 @@ TWSRRuby.prototype.execute = function() {
 	// }]);	y
 
 }
+var cnt = 0;
 
 //Render this widget into the DOM
 TWSRRuby.prototype.render = function(parent,nextSibling) {
-	if(!("twsrruby" in this.parseTreeNode)){
+	var oc = this.parseTreeNode.children;
+	//if(!("twsrruby" in this)){
+	if(true){
 		this.parentDomNode = parent;
 		this.computeAttributes();
 		var upper = this.getAttribute("u");
 		var useAnswer = !this.hasAttribute("na");
 
-		var tags = $tw.wiki.getTiddler(this.getVariable("currentTiddler")).getFieldList("tags");
+		var ct = this.getVariable("currentTiddler");
+		var tid = $tw.wiki.getTiddler(ct);
+		var tags = tid ? tid.getFieldList("tags") : [];
 		if(tags.indexOf("$:/tags/twsr/noRubyAnswer") > 0){
 				useAnswer = false;
 		}
-		
-		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby>twsr_replace_me<rt>"+(useAnswer?"<$a s>":"")+upper+(useAnswer?"</$a>":"")+"</rt></ruby>", {parseAsInline: true});
 
-		var newTree = wikiParser.tree;
-		var temp = newTree[0].children[1];
-		newTree[0].children = this.parseTreeNode.children;
-		newTree[0].children.push(temp);
-		this.parseTreeNode.children = newTree;
-		this.parseTreeNode["twsrruby"] = true;
+		var container = this.document.createElement("span");
+		Widget.prototype.render.call(this, container, nextSibling);
+		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby>"+container.innerHTML+"<rt>"+(useAnswer?"<$a s>":"")+upper+(useAnswer?"</$a>":"")+"</rt></ruby>", {parseAsInline: true});
+		this.parseTreeNode.children = wikiParser.tree;
 	}
 	Widget.prototype.render.call(this, parent, nextSibling);
+	this.parseTreeNode.children = oc;
 };
 
 
