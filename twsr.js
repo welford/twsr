@@ -721,19 +721,30 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 	if(true){
 		this.parentDomNode = parent;
 		this.computeAttributes();
-		var upper = this.getAttribute("u");
+		var rubyPosition = "over";
+		var ruby = this.getAttribute("u");
+		if(!ruby || ruby == ""){
+			var ruby = this.getAttribute("l");
+			rubyPosition = "under";
+		}
 		var useAnswer = !this.hasAttribute("na");
 
 		var ct = this.getVariable("currentTiddler");
 		var tid = $tw.wiki.getTiddler(ct);
 		var tags = tid ? tid.getFieldList("tags") : [];
-		if(tags.indexOf("$:/tags/twsr/noRubyAnswer") > 0){
+		if(tags.indexOf("$:/tags/ruby/noAnswer") >= 0){
 				useAnswer = false;
+		}
+
+		if(tags.indexOf("$:/tags/ruby/hide") >= 0){
+			ruby = "";
+			useAnswer = false;
 		}
 
 		var container = this.document.createElement("span");
 		Widget.prototype.render.call(this, container, nextSibling);
-		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby>"+container.innerHTML+"<rt>"+(useAnswer?"<$a s>":"")+upper+(useAnswer?"</$a>":"")+"</rt></ruby>", {parseAsInline: true});
+		var rtTxt = "<rt>"+(useAnswer?"<$a s>":"")+ruby+(useAnswer?"</$a>":"")+"</rt>";
+		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby style=\"ruby-position:"+rubyPosition+"\">"+container.innerHTML+rtTxt+"</ruby>", {parseAsInline: true});
 		this.parseTreeNode.children = wikiParser.tree;
 	}
 	Widget.prototype.render.call(this, parent, nextSibling);
