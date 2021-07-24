@@ -727,6 +727,7 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 			var ruby = this.getAttribute("l");
 			rubyPosition = "under";
 		}
+
 		var useAnswer = !this.hasAttribute("na");
 
 		var ct = this.getVariable("currentTiddler");
@@ -742,7 +743,7 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 		}
 
 		var container = this.document.createElement("span");
-		Widget.prototype.render.call(this, container, nextSibling);
+		Widget.prototype.render.call(this, container, null);
 		var rtTxt = "<rt>"+(useAnswer?"<$a s>":"")+ruby+(useAnswer?"</$a>":"")+"</rt>";
 		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby style=\"ruby-position:"+rubyPosition+"\">"+container.innerHTML+rtTxt+"</ruby>", {parseAsInline: true});
 		this.parseTreeNode.children = wikiParser.tree;
