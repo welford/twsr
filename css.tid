@@ -14,6 +14,7 @@ span.twsr_answer
 
 div.twsr_hidden,span.twsr_hidden
 {
+	cursor: pointer;
 	color:black !important;
 	background-color:black !important;
 	user-select: none;
@@ -21,6 +22,7 @@ div.twsr_hidden,span.twsr_hidden
 
 div.twsr_hidden *
 {
+	cursor: pointer;
 	color:black !important;
 	background-color:black !important;
 	border:0px solid black !important;

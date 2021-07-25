@@ -653,9 +653,19 @@ TWSRAnswer.prototype = new Widget(); //Inherit from the basey widget class
 TWSRAnswer.prototype.render = function(parent,nextSibling) {
 	var locallyActive  = false;
 	if(!g_twsrActive){
-		var ct = this.getVariable("currentTiddler");
-		var tid = $tw.wiki.getTiddler(ct);
-		var tags = tid ? tid.getFieldList("tags") : [];
+		//have to traverse parent tree incase we are transcluded
+		var p = this;
+		var tags = [];
+		while(p){
+			var ct = p.getVariable("currentTiddler");
+			var tid = $tw.wiki.getTiddler(ct);
+			if(tid){
+				tags = tags.concat(tid.getFieldList("tags"));
+				tags = tags.filter(function(item, pos) {	return tags.indexOf(item) == pos; })
+			}
+			p = p.parentWidget;
+		}
+		///
 		if(tags.indexOf("$:/tags/twsr/hideAnswer") >= 0 || tags.indexOf("$:/tags/twsr/hideAnswers") >= 0){
 			locallyActive = true;
 		}
@@ -730,9 +740,19 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 
 		var useAnswer = !this.hasAttribute("na");
 
-		var ct = this.getVariable("currentTiddler");
-		var tid = $tw.wiki.getTiddler(ct);
-		var tags = tid ? tid.getFieldList("tags") : [];
+		//have to traverse parent tree incase we are transcluded
+		var p = this;
+		var tags = [];
+		while(p){
+			var ct = p.getVariable("currentTiddler");
+			var tid = $tw.wiki.getTiddler(ct);
+			if(tid){
+				tags = tags.concat(tid.getFieldList("tags"));
+				tags = tags.filter(function(item, pos) {	return tags.indexOf(item) == pos; })
+			}
+			p = p.parentWidget;
+		}
+		///
 		if(tags.indexOf("$:/tags/ruby/noAnswer") >= 0){
 				useAnswer = false;
 		}
