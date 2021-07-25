@@ -735,7 +735,11 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 		var ruby = this.getAttribute("u");
 		if(!ruby || ruby == ""){
 			var ruby = this.getAttribute("l");
-			rubyPosition = "under";
+			if(!ruby || ruby == ""){
+			}
+			else{
+				rubyPosition = "under";
+			}
 		}
 
 		var useAnswer = !this.hasAttribute("na");
