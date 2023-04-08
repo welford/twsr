@@ -15,15 +15,26 @@ span.twsr_answer
 div.twsr_hidden,span.twsr_hidden
 {
 	cursor: pointer;
-	color:black !important;
-	background-color:black !important;
+	color: black !important;
+	background-color: black !important;
 	user-select: none;
+	border-radius: 3px;
 }
 
 div.twsr_hidden *
 {
 	cursor: pointer;
-	color:black !important;
-	background-color:black !important;
-	border:0px solid black !important;
+	color: black !important;
+	background-color: black !important;
+	border: 0px solid black !important;
+}
+
+ruby {
+  display: inline-flex;
+  flex-direction: column-reverse;
+}
+
+rb, rt {
+  display: inline;
+  margin-bottom:-1px;
 }

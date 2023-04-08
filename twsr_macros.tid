@@ -1,0 +1,19 @@
+title: $:/editions/twsr/macros
+tags: $:/tags/Macro
+type: text/vnd.tiddlywiki
+
+\define twsr-title-list()
+<$list filter="[!has[draft.of]tag{!!title}]-[{!!title}]">
+<$link to={{!!title}}><$view field="title"/></$link><br/>
+</$list>
+\end
+
+\define twsr-tagged-list()
+<$vars theseTags={{{ [<currentTiddler>tags[]sort[]join[,]] }}} >
+<$list filter="[all[tiddlers]] :filter[tags[]sort[]join[,]match<theseTags>] +[!match<currentTiddler>]">
+<$link to={{!!title}}><$view field="title"/></$link><br/>
+</$list>
+</$vars>
+\end
+
+\define twsr-icon(_) <span class="doc-icon">{{$_$}}</span>

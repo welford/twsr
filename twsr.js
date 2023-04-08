@@ -29,9 +29,10 @@ TWSRWidget.prototype = new Widget();
 
 //no idea about the other SM algorithms
 TWSRWidget.prototype.AddNewCards = function (amount) {
-	var tiddler = $tw.wiki.getTiddler(this.tiddler_name);
+	//var tiddler = $tw.wiki.getTiddler(this.m_tiddler_name);
+	//var tags = tiddler.getFieldList("tags");
+	var tags = this.m_tags;
 
-	var tags = tiddler.getFieldList("tags");	
 	var tagFilter = "",filter = "";
 	//tags we are interested in
 	for(i = 0;i<tags.length;i++){
@@ -74,11 +75,12 @@ TWSRWidget.prototype.AddNewCards = function (amount) {
 //no idea about the other SM algorithms
 TWSRWidget.prototype.GetScheduledCards = function (title) {
 	//get defaults for things that are not set
-	var tiddler = $tw.wiki.getTiddler(title);
+	//var tiddler = $tw.wiki.getTiddler(title);
+	//var tags = tiddler.getFieldList("tags");
+	var tags = this.m_tags;
 	//new first, then scheduled, then poorly graded!
 
 	//1. NEW
-	var tags = tiddler.getFieldList("tags");	
 	var tagFilter = "",filter = "";	
 	for(i = 0;i<tags.length;i++){
 		var tag = tags[i];
@@ -234,7 +236,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 
 	//. . . . .
 	var index = 0, limit= 0, activeCard = null;
-	var tiddlers =this.GetScheduledCards(this.tiddler_name);
+	var tiddlers =this.GetScheduledCards(this.m_tiddler_name);
 	limit = tiddlers.length;
 
 	if(!settingsDiv.isTiddlyWikiFakeDom){
@@ -330,7 +332,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		if(index >= limit)
 		{
 			index = 0, limit= 0,activeCard = null;
-			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
+			tiddlers = _this.GetScheduledCards(_this.m_tiddler_name);
 			limit = tiddlers.length;
 			if(!settingsDiv.isTiddlyWikiFakeDom){
 				settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
@@ -348,7 +350,7 @@ TWSRWidget.prototype.ShowCards = function (parent,nextSibling) {
 		if(index >= limit)
 		{
 			index = 0, limit= 0,activeCard = null;
-			tiddlers = _this.GetScheduledCards(_this.tiddler_name);
+			tiddlers = _this.GetScheduledCards(_this.m_tiddler_name);
 			limit = tiddlers.length;
 			if(!settingsDiv.isTiddlyWikiFakeDom){
 				settingsDiv.setAttribute("title", _this.twsr_scheduled_tip + String(tiddlers.length));
@@ -543,8 +545,9 @@ TWSRWidget.prototype.execute = function () {
 
 TWSRWidget.prototype.GetConfigTiddlers = function ()
 {
-	var target_tiddler = $tw.wiki.getTiddler(this.tiddler_name);
-	var target_tags = target_tiddler.getFieldList("tags");
+	//var target_tiddler = $tw.wiki.getTiddler(this.m_tiddler_name);
+	//var target_tags = target_tiddler.getFieldList("tags");
+	var target_tags = this.m_tags;
 
 	var filter = "[all[tiddlers+shadows]tag[$:/tags/twsr/config]]";
 	var tiddlers = $tw.wiki.filterTiddlers(filter);
@@ -553,16 +556,16 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 		var valid = false;
 		var tiddler = $tw.wiki.getTiddler(tiddlers[i]);
 
-		var names 		= tiddler.getFieldList("twsr_cfg_grade_names");	
-		var numbers 	= tiddler.getFieldList("twsr_cfg_grade_numbers");	
+		var names 		= tiddler.getFieldList("twsr_cfg_grade_names");
+		var numbers 	= tiddler.getFieldList("twsr_cfg_grade_numbers");
 
-		var add_new 			= tiddler.getFieldList("twsr_cfg_add_new");	
-		var tags 				= tiddler.getFieldList("twsr_cfg_tags");	
-		var ignore_tags 		= tiddler.getFieldList("twsr_cfg_ignore_tags");	
-		var show_answer 		= tiddler.getFieldString("twsr_cfg_show_answer");	
-		var scheduled_tip 		= tiddler.getFieldString("twsr_cfg_cards_scheduled")+ " ";	
-		var finished 			= tiddler.getFieldString("twsr_cfg_cards_finished")+ " ";	
-		var nothing_scheduled 	= tiddler.getFieldString("twsr_cfg_nothing_scheduled")+ " ";	
+		var add_new 			= tiddler.getFieldList("twsr_cfg_add_new");
+		var tags 				= tiddler.getFieldList("twsr_cfg_tags");
+		var ignore_tags 		= tiddler.getFieldList("twsr_cfg_ignore_tags");
+		var show_answer 		= tiddler.getFieldString("twsr_cfg_show_answer");
+		var scheduled_tip 		= tiddler.getFieldString("twsr_cfg_cards_scheduled")+ " ";
+		var finished 			= tiddler.getFieldString("twsr_cfg_cards_finished")+ " ";
+		var nothing_scheduled 	= tiddler.getFieldString("twsr_cfg_nothing_scheduled")+ " ";
 
 		var common_tags 		= target_tags.filter(function(value) { 
 			return tags.indexOf(value) > -1;
@@ -590,10 +593,10 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 				break; //we found our matching config, ignore further matches
 			}
 			else{
-				console.log("tswr config tiddler : " + tiddler.getFieldString("title") + "malformed, grade names do not match numbers")
+				console.error("tswr config tiddler : " + tiddler.getFieldString("title") + " malformed, grade names do not match numbers")
 			}
 		}else{
-			console.log("tswr config tiddler : " + tiddler.getFieldString("title") + "no matching tags :" + target_tags + " " + tags)
+			console.error("tswr config tiddler : " + tiddler.getFieldString("title") + " no matching tags :" + target_tags + " " + tags)
 		}
 	}
 }
@@ -601,7 +604,16 @@ TWSRWidget.prototype.GetConfigTiddlers = function ()
 TWSRWidget.prototype.InitTWSR = function ()
 {
 	//try to get from marco, is missing try to get from the 
-	this.tiddler_name = this.getAttribute(g_src,this.getVariable("currentTiddler"));
+	this.m_tiddler_name = this.getAttribute(g_src,this.getVariable("currentTiddler"));
+	this.m_tags = $tw.utils.parseStringArray(this.getAttribute("tags","")); //we should be passed tags
+	this.m_cfgTags = $tw.utils.parseStringArray(this.getAttribute("cfg","$:/tags/twsr")); //match the config we want, it not passed with use the twsr default
+	//but if we aren't we can potentially get them from the containing tiddler
+	if(this.m_tags.length == 0){
+		var tiddler = $tw.wiki.getTiddler(this.m_tiddler_name);
+		this.m_tags = tiddler.getFieldList("tags");
+	} else {
+		this.m_tags = this.m_tags.concat(this.m_cfgTags);
+	}
 	this.questionElm = null;
 	this.answerElm = [];
 	this.answerClickCB = null;
@@ -612,7 +624,7 @@ TWSRWidget.prototype.InitTWSR = function ()
 //Selectively refreshes the widget if needed. Returns true if the widget or any of its children needed re-rendering
 TWSRWidget.prototype.refresh = function (changedTiddlers) {
 	var changedAttributes = this.computeAttributes();
-	if (changedAttributes["class"] || changedAttributes.selectedClass || changedAttributes.style || changedAttributes.tiddler_name) {
+	if (changedAttributes["class"] || changedAttributes.selectedClass || changedAttributes.style || changedAttributes.m_tiddler_name) {
 		this.refreshSelf();
 		return true;
 	}
@@ -703,38 +715,37 @@ TWSRAnswer.prototype.render = function(parent,nextSibling) {
 // shortcut for getting ruby format
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var TWSRRuby = function(parseTreeNode,options) {
-	this.initialise(parseTreeNode, options);
-};
+var TWSRRuby = function(parseTreeNode,options) { this.initialise(parseTreeNode, options); };
+var TWSRRubyAnswer = function(parseTreeNode,options) { this.initialise(parseTreeNode, options); };
 
 TWSRRuby.prototype = new Widget(); //Inherit from the basey widget class
+TWSRRubyAnswer.prototype = new Widget(); //Inherit from the basey widget class
 
 //Compute the internal state of the widget
 TWSRRuby.prototype.execute = function() {
 	Widget.prototype.execute.call(this);
 	//left here for future reference
-
 	// this.makeChildWidgets([{
 	// 	type: "answer",
 	// 	attributes: this.parseTreeNode.attributes,
-	
 	// 	children: this.parseTreeNode.children
 	// }]);	y
-
 }
-var cnt = 0;
 
+TWSRRubyAnswer.prototype.execute = function() { Widget.prototype.execute.call(this); }
+
+var cnt = 0;
 //Render this widget into the DOM
-TWSRRuby.prototype.render = function(parent,nextSibling) {
-	var oc = this.parseTreeNode.children;
+_RubyRender = function(_this, parent,nextSibling,useAnswer) {
+	var oc = _this.parseTreeNode.children;
 	//if(!("twsrruby" in this)){
 	if(true){
-		this.parentDomNode = parent;
-		this.computeAttributes();
+		_this.parentDomNode = parent;
+		_this.computeAttributes();
 		var rubyPosition = "over";
-		var ruby = this.getAttribute("u");
+		var ruby = _this.getAttribute("u");
 		if(!ruby || ruby == ""){
-			var ruby = this.getAttribute("l");
+			var ruby = _this.getAttribute("l");
 			if(!ruby || ruby == ""){
 			}
 			else{
@@ -742,10 +753,8 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 			}
 		}
 
-		var useAnswer = !this.hasAttribute("na");
-
 		//have to traverse parent tree incase we are transcluded
-		var p = this;
+		var p = _this;
 		var tags = [];
 		while(p){
 			var ct = p.getVariable("currentTiddler");
@@ -756,26 +765,32 @@ TWSRRuby.prototype.render = function(parent,nextSibling) {
 			}
 			p = p.parentWidget;
 		}
-		///
+		//
 		if(tags.indexOf("$:/tags/ruby/noAnswer") >= 0){
 				useAnswer = false;
 		}
-
 		if(tags.indexOf("$:/tags/ruby/hide") >= 0){
 			ruby = "";
 			useAnswer = false;
 		}
 
-		var container = this.document.createElement("span");
-		Widget.prototype.render.call(this, container, null);
+		var container = _this.document.createElement("span");
+		Widget.prototype.render.call(_this, container, null);
 		var rtTxt = "<rt>"+(useAnswer?"<$a s>":"")+ruby+(useAnswer?"</$a>":"")+"</rt>";
 		var wikiParser = $tw.wiki.parseText("text/vnd.tiddlywiki", "<ruby style=\"ruby-position:"+rubyPosition+"\">"+container.innerHTML+rtTxt+"</ruby>", {parseAsInline: true});
-		this.parseTreeNode.children = wikiParser.tree;
+		_this.parseTreeNode.children = wikiParser.tree;
 	}
-	Widget.prototype.render.call(this, parent, nextSibling);
-	this.parseTreeNode.children = oc;
+	Widget.prototype.render.call(_this, parent, nextSibling);
+	_this.parseTreeNode.children = oc;
 };
 
+TWSRRuby.prototype.render = function(parent,nextSibling) {
+	_RubyRender(this,parent,nextSibling,false)
+};
+
+TWSRRubyAnswer.prototype.render = function(parent,nextSibling) {
+	_RubyRender(this,parent,nextSibling,true)
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -783,8 +798,11 @@ exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;
 exports.answer = TWSRAnswer;
 exports.ruby = TWSRRuby;
+exports.rubyAnswer = TWSRRubyAnswer;
+//exports.rubyAnswer = TWSRRubyAnswer;
 exports.q = TWSRQuestion;
 exports.a = TWSRAnswer;
 exports.r = TWSRRuby;
+exports.ra = TWSRRubyAnswer;
 
 })();
