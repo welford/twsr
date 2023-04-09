@@ -28,13 +28,3 @@ div.twsr_hidden *
 	background-color: black !important;
 	border: 0px solid black !important;
 }
-
-ruby {
-  display: inline-flex;
-  flex-direction: column-reverse;
-}
-
-rb, rt {
-  display: inline;
-  margin-bottom:-1px;
-}
