@@ -716,10 +716,8 @@ TWSRAnswer.prototype.render = function(parent,nextSibling) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var TWSRRuby = function(parseTreeNode,options) { this.initialise(parseTreeNode, options); };
-var TWSRRubyAnswer = function(parseTreeNode,options) { this.initialise(parseTreeNode, options); };
 
 TWSRRuby.prototype = new Widget(); //Inherit from the basey widget class
-TWSRRubyAnswer.prototype = new Widget(); //Inherit from the basey widget class
 
 //Compute the internal state of the widget
 TWSRRuby.prototype.execute = function() {
@@ -731,8 +729,6 @@ TWSRRuby.prototype.execute = function() {
 	// 	children: this.parseTreeNode.children
 	// }]);	y
 }
-
-TWSRRubyAnswer.prototype.execute = function() { Widget.prototype.execute.call(this); }
 
 var cnt = 0;
 //Render this widget into the DOM
@@ -785,12 +781,8 @@ _RubyRender = function(_this, parent,nextSibling,useAnswer) {
 };
 
 TWSRRuby.prototype.render = function(parent,nextSibling) {
-	_RubyRender(this,parent,nextSibling,false)
-};
-
-TWSRRubyAnswer.prototype.render = function(parent,nextSibling) {
 	_RubyRender(this,parent,nextSibling,true)
-}
+};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -798,11 +790,9 @@ exports.twsr = TWSRWidget;
 exports.question = TWSRQuestion;
 exports.answer = TWSRAnswer;
 exports.ruby = TWSRRuby;
-exports.rubyAnswer = TWSRRubyAnswer;
 //exports.rubyAnswer = TWSRRubyAnswer;
 exports.q = TWSRQuestion;
 exports.a = TWSRAnswer;
 exports.r = TWSRRuby;
-exports.ra = TWSRRubyAnswer;
 
 })();
