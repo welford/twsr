@@ -12,11 +12,16 @@ span.twsr_answer
 {	
 }
 
+ruby rt span.twsr_hidden {
+  filter: blur(5px);
+  background: none !important;
+}
+
 div.twsr_hidden,span.twsr_hidden
 {
 	cursor: pointer;
 	color: black !important;
-	background-color: black !important;
+	background: black !important;
 	user-select: none;
 	border-radius: 3px;
 }
